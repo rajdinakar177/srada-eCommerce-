@@ -9,18 +9,35 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@getbrevo/brevo": "^5.0.4",
+    "@tabler/icons-react": "^3.44.0",
+    "axios": "^1.18.0",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
+    "daisyui": "^5.5.23",
+    "dayjs": "^1.11.21",
+    "filesize": "^11.0.17",
+    "framer-motion": "^12.40.0",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.18.0",
+    "mailgen": "^2.0.34",
+    "mongoose": "^9.7.0",
+    "next": "^16.2.9",
+    "next-cloudinary": "^6.17.5",
+    "nodemailer": "^9.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.9",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.43",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^5.9.3"
   }
 }
