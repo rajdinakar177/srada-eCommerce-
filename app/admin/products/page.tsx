@@ -6,22 +6,30 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 export default function AdminProducts() {
-  const router = useRouter();
 
-  const [products, setProducts] = useState<any[]>([]);
+  const router = useRouter();
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
-    try {
-      setLoading(true);
 
+    try {
+
+      setLoading(true);
       const res = await axios.get("/api/products");
       setProducts(res.data);
+
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Failed to load");
+
+      console.error("Failed to fetch products:", error);
+      toast.error(error?.response?.data?.error || "Failed to load products");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   useEffect(() => {
@@ -29,143 +37,156 @@ export default function AdminProducts() {
   }, []);
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+
+    if (!confirm("Delete this product? This can't be undone.")) return;
 
     try {
+
       await axios.delete(`/api/products/${id}`);
 
       toast.success("Product deleted");
+
       fetchProducts();
+
     } catch (error: any) {
-      toast.error("Delete failed");
+
+      console.error("Delete failed:", error);
+      toast.error(error?.response?.data?.error || "Delete failed");
+
     }
+
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden p-8">
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-orange-500/20 blur-[140px] rounded-full" />
+    <div className="min-h-screen bg-black p-8">
 
-      <div className="max-w-7xl mx-auto relative">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
+      <div className="max-w-7xl mx-auto">
+
+        <div className="flex justify-between items-center mb-8">
+
           <div>
-            <p className="text-orange-400 tracking-[5px] text-xs">
+            <p className="text-orange-500 uppercase tracking-[4px] text-xs">
               SRADA ADMIN
             </p>
 
-            <h1 className="text-white text-5xl font-black mt-2">
+            <h1 className="text-white text-4xl font-black">
               Products
             </h1>
           </div>
 
           <button
             onClick={() => router.push("/admin/products/new")}
-            className="bg-orange-500 hover:bg-orange-400 transition px-8 py-4 rounded-2xl text-white font-bold shadow-lg shadow-orange-500/30"
+            className="bg-orange-500 px-6 py-3 rounded-xl text-white"
           >
-            + Add Product
+            Add Product
           </button>
+
         </div>
 
-        {/* Glass Table */}
-        <div className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl">
+        <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
+
           <table className="w-full">
-            <thead>
-              <tr className="bg-white/10">
-                <th className="p-5 text-left text-gray-300">Image</th>
-                <th className="p-5 text-left text-gray-300">Name</th>
-                <th className="p-5 text-left text-gray-300">Category</th>
-                <th className="p-5 text-left text-gray-300">Price</th>
-                <th className="p-5 text-left text-gray-300">Stock</th>
-                <th className="p-5 text-left text-gray-300">Action</th>
+
+            <thead className="bg-white/5">
+
+              <tr>
+                <th className="p-4 text-left text-gray-400">Image</th>
+                <th className="p-4 text-left text-gray-400">Name</th>
+                <th className="p-4 text-left text-gray-400">Category</th>
+                <th className="p-4 text-left text-gray-400">Price</th>
+                <th className="p-4 text-left text-gray-400">Stock</th>
+                <th className="p-4 text-left text-gray-400">Actions</th>
               </tr>
+
             </thead>
 
             <tbody>
-              {loading && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="p-10 text-center text-gray-400"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              )}
 
               {!loading && products.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="p-10 text-center text-gray-400"
-                  >
-                    No products found
+                  <td colSpan={6} className="p-10 text-center text-gray-500">
+                    No products yet. Add your first one to get started.
                   </td>
                 </tr>
               )}
 
-              {products.map((product) => (
+              {products.map((product: any) => (
+
                 <tr
                   key={product._id}
-                  className="border-t border-white/10 hover:bg-white/10 transition"
+                  className="border-t border-white/5"
                 >
-                  <td className="p-5">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/10">
-                      <img
-                        src={product.images?.[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+
+                  <td className="p-4">
+
+                    <img
+                      src={product.images?.[0]}
+                      className="w-16 h-16 rounded-lg object-cover bg-white/5"
+                      alt={product.name}
+                    />
+
                   </td>
 
-                  <td className="p-5 text-white font-semibold">
+                  <td className="p-4 text-white">
                     {product.name}
                   </td>
 
-                  <td className="p-5 text-gray-300">
+                  <td className="p-4 text-gray-400">
                     {product.category}
                   </td>
 
-                  <td className="p-5 text-orange-400 font-bold">
+                  <td className="p-4 text-orange-400">
                     ₹{product.price}
                   </td>
 
-                  <td className="p-5">
+                  <td className="p-4">
+
                     <span
-                      className={`px-4 py-2 rounded-full text-sm ${
+                      className={
                         product.stock > 0
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }
                     >
                       {product.stock}
                     </span>
+
                   </td>
 
-                  <td className="p-5 flex gap-4">
+                  <td className="p-4 flex gap-3">
+
                     <button
                       onClick={() =>
                         router.push(`/admin/products/${product._id}/edit`)
                       }
-                      className="px-4 py-2 rounded-xl bg-blue-500/20 text-blue-300 hover:bg-blue-500/40"
+                      className="text-blue-400 hover:text-blue-300 transition-colors"
                     >
                       Edit
                     </button>
 
                     <button
-                      onClick={() => deleteProduct(product._id)}
-                      className="px-4 py-2 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500/40"
+                      onClick={() =>
+                        deleteProduct(product._id)
+                      }
+                      className="text-red-400 hover:text-red-300 transition-colors"
                     >
                       Delete
                     </button>
+
                   </td>
+
                 </tr>
+
               ))}
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
+
     </div>
   );
 }

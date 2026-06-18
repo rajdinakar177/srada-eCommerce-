@@ -11,16 +11,11 @@ const toSlug = (value: string) =>
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: Request) {
 
   try {
 
     await connect();
-
-    const { id } = await params;
 
     const body = await req.json();
 
@@ -31,36 +26,31 @@ export async function PUT(
       );
     }
 
-    const category = await Category.findByIdAndUpdate(
-      id,
+    const category = await Category.create({
+      name: body.name.trim(),
+      slug: toSlug(body.name),
+    });
+
+    return NextResponse.json(
       {
-        name: body.name.trim(),
-        slug: toSlug(body.name),
+        message: "Category created",
+        category,
       },
-      {
-        new: true,
-        runValidators: true,
-      }
+      { status: 201 }
     );
-
-    if (!category) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(category);
 
   }
   catch (error: any) {
 
-    console.error("PUT /api/categories/[id] failed:", error);
+    console.error("POST /api/categories failed:", error);
 
+    // Duplicate name/slug hits the unique index
     const message =
       error?.code === 11000
         ? "A category with this name already exists"
-        : "Category update failed";
+        : error?.name === "ValidationError"
+        ? error.message
+        : "Category creation failed";
 
     return NextResponse.json(
       { error: message },
@@ -71,28 +61,23 @@ export async function PUT(
 
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET() {
 
   try {
 
     await connect();
 
-    const { id } = await params;
+    const categories = await Category.find().sort({ name: 1 });
 
-    await Category.findByIdAndDelete(id);
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json(categories);
 
   }
   catch (error: any) {
 
-    console.error("DELETE /api/categories/[id] failed:", error);
+    console.error("GET /api/categories failed:", error);
 
     return NextResponse.json(
-      { error: "Failed to delete category" },
+      { error: "Failed to fetch categories" },
       { status: 500 }
     );
 

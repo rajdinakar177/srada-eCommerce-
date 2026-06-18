@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { connect } from "@/app/dbConfig/db";
-import Category from "@/app/models/categoryModel";
+import SubCategory from "@/app/models/subCategoryModel";
 
 const toSlug = (value: string) =>
   value
@@ -24,43 +24,44 @@ export async function PUT(
 
     const body = await req.json();
 
-    if (!body.name || !body.name.trim()) {
-      return NextResponse.json(
-        { error: "Category name is required" },
-        { status: 400 }
-      );
+    const update: any = {};
+
+    if (body.name && body.name.trim()) {
+      update.name = body.name.trim();
+      update.slug = toSlug(body.name);
     }
 
-    const category = await Category.findByIdAndUpdate(
+    if (body.category) {
+      update.category = body.category;
+    }
+
+    const subcategory = await SubCategory.findByIdAndUpdate(
       id,
-      {
-        name: body.name.trim(),
-        slug: toSlug(body.name),
-      },
+      update,
       {
         new: true,
         runValidators: true,
       }
-    );
+    ).populate("category", "name slug");
 
-    if (!category) {
+    if (!subcategory) {
       return NextResponse.json(
-        { error: "Category not found" },
+        { error: "SubCategory not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(category);
+    return NextResponse.json(subcategory);
 
   }
   catch (error: any) {
 
-    console.error("PUT /api/categories/[id] failed:", error);
+    console.error("PUT /api/subcategories/[id] failed:", error);
 
     const message =
       error?.code === 11000
-        ? "A category with this name already exists"
-        : "Category update failed";
+        ? "This subcategory already exists under the selected category"
+        : "SubCategory update failed";
 
     return NextResponse.json(
       { error: message },
@@ -82,17 +83,17 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await Category.findByIdAndDelete(id);
+    await SubCategory.findByIdAndDelete(id);
 
     return NextResponse.json({ success: true });
 
   }
   catch (error: any) {
 
-    console.error("DELETE /api/categories/[id] failed:", error);
+    console.error("DELETE /api/subcategories/[id] failed:", error);
 
     return NextResponse.json(
-      { error: "Failed to delete category" },
+      { error: "Failed to delete subcategory" },
       { status: 500 }
     );
 

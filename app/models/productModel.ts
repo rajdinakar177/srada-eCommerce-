@@ -16,8 +16,15 @@ const productSchema = new mongoose.Schema(
     description: String,
 
     category: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true
+    },
+
+    subCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubCategory",
+      required: true
     },
 
     price: {
@@ -39,6 +46,11 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
 
+    newArrival: {
+      type: Boolean,
+      default: false,
+    },
+
     status: {
       type: String,
       default: "active",
@@ -50,4 +62,4 @@ const productSchema = new mongoose.Schema(
 );
 
 export default mongoose.models.Product ||
-mongoose.model("Product", productSchema);
+  mongoose.model("Product", productSchema);

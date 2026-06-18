@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -12,20 +12,86 @@ export default function AddProduct() {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [categories, setCategories] = useState<any[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [subcategories, setSubcategories] = useState<any[]>([]);
+    const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
 
     const [product, setProduct] = useState({
         name: "",
         description: "",
         category: "",
+        subCategory: "",
         price: "",
-        comparePrice: "",
+        salePrice: "",
         stock: "",
-        sizes: "",
-        colors: "",
         images: [] as string[],
         featured: false,
         newArrival: false
     });
+
+    useEffect(() => {
+
+        const fetchCategories = async () => {
+
+            try {
+
+                const res = await axios.get("/api/categories");
+                setCategories(res.data);
+
+            } catch (error: any) {
+
+                console.error("Failed to fetch categories:", error);
+                toast.error("Failed to load categories");
+
+            } finally {
+
+                setCategoriesLoading(false);
+
+            }
+
+        };
+
+        fetchCategories();
+
+    }, []);
+
+    // Re-fetch subcategories whenever the selected category changes
+    useEffect(() => {
+
+        if (!product.category) {
+            setSubcategories([]);
+            return;
+        }
+
+        const fetchSubcategories = async () => {
+
+            try {
+
+                setSubcategoriesLoading(true);
+
+                const res = await axios.get(
+                    `/api/subcategories?category=${product.category}`
+                );
+
+                setSubcategories(res.data);
+
+            } catch (error: any) {
+
+                console.error("Failed to fetch subcategories:", error);
+                toast.error("Failed to load subcategories");
+
+            } finally {
+
+                setSubcategoriesLoading(false);
+
+            }
+
+        };
+
+        fetchSubcategories();
+
+    }, [product.category]);
 
     const uploadImage = async (e: any) => {
 
@@ -87,8 +153,8 @@ export default function AddProduct() {
             next.price = "Price must be a valid number";
         }
 
-        if (product.comparePrice.trim() && Number.isNaN(Number(product.comparePrice))) {
-            next.comparePrice = "Compare price must be a valid number";
+        if (product.salePrice.trim() && Number.isNaN(Number(product.salePrice))) {
+            next.salePrice = "Sale price must be a valid number";
         }
 
         if (!product.stock.trim()) {
@@ -102,14 +168,6 @@ export default function AddProduct() {
         return Object.keys(next).length === 0;
 
     }
-
-    // Splits a comma list safely and drops empty entries,
-    // so a blank field becomes [] instead of [""]
-    const toList = (value: string) =>
-        value
-            .split(",")
-            .map(v => v.trim())
-            .filter(Boolean);
 
     const submit = async () => {
 
@@ -125,12 +183,10 @@ export default function AddProduct() {
             await axios.post("/api/products", {
                 ...product,
                 price: Number(product.price),
-                comparePrice: product.comparePrice.trim()
-                    ? Number(product.comparePrice)
+                salePrice: product.salePrice.trim()
+                    ? Number(product.salePrice)
                     : 0,
-                stock: Number(product.stock),
-                sizes: toList(product.sizes),
-                colors: toList(product.colors)
+                stock: Number(product.stock)
             });
 
             toast.success("Product added");
@@ -220,16 +276,66 @@ export default function AddProduct() {
                             <label className="block text-white/60 text-xs font-medium mb-2">
                                 Category *
                             </label>
-                            <input
+                            <select
                                 value={product.category}
-                                placeholder="e.g. T-Shirts"
                                 className={fieldClass("category")}
+                                disabled={categoriesLoading}
                                 onChange={e =>
-                                    setProduct({ ...product, category: e.target.value })
+                                    setProduct({
+                                        ...product,
+                                        category: e.target.value,
+                                        subCategory: "" // reset child selection when parent changes
+                                    })
                                 }
-                            />
+                            >
+                                <option value="">
+                                    {categoriesLoading ? "Loading..." : "Select a category"}
+                                </option>
+                                {categories.map(cat => (
+                                    <option key={cat._id} value={cat._id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
                             {errors.category && (
                                 <p className="text-red-400 text-xs mt-1.5">{errors.category}</p>
+                            )}
+                            {!categoriesLoading && categories.length === 0 && (
+                                <p className="text-white/30 text-xs mt-1.5">
+                                    No categories yet — create one in Categories first.
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-white/60 text-xs font-medium mb-2">
+                                SubCategory
+                            </label>
+                            <select
+                                value={product.subCategory}
+                                className={fieldClass("subCategory")}
+                                disabled={!product.category || subcategoriesLoading}
+                                onChange={e =>
+                                    setProduct({ ...product, subCategory: e.target.value })
+                                }
+                            >
+                                <option value="">
+                                    {!product.category
+                                        ? "Select a category first"
+                                        : subcategoriesLoading
+                                        ? "Loading..."
+                                        : "Select a subcategory"}
+                                </option>
+                                {subcategories.map(sub => (
+                                    <option key={sub._id} value={sub._id}>
+                                        {sub.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {product.category && !subcategoriesLoading && subcategories.length === 0 && (
+                                <p className="text-white/30 text-xs mt-1.5">
+                                    No subcategories under this category yet.
+                                </p>
                             )}
                         </div>
 
@@ -271,48 +377,20 @@ export default function AddProduct() {
 
                         <div>
                             <label className="block text-white/60 text-xs font-medium mb-2">
-                                Compare-at price (₹)
+                                Sale price (₹)
                             </label>
                             <input
-                                value={product.comparePrice}
+                                value={product.salePrice}
                                 placeholder="0.00"
                                 inputMode="decimal"
-                                className={fieldClass("comparePrice")}
+                                className={fieldClass("salePrice")}
                                 onChange={e =>
-                                    setProduct({ ...product, comparePrice: e.target.value })
+                                    setProduct({ ...product, salePrice: e.target.value })
                                 }
                             />
-                            {errors.comparePrice && (
-                                <p className="text-red-400 text-xs mt-1.5">{errors.comparePrice}</p>
+                            {errors.salePrice && (
+                                <p className="text-red-400 text-xs mt-1.5">{errors.salePrice}</p>
                             )}
-                        </div>
-
-                        <div>
-                            <label className="block text-white/60 text-xs font-medium mb-2">
-                                Sizes
-                            </label>
-                            <input
-                                value={product.sizes}
-                                placeholder="S, M, L, XL"
-                                className={fieldClass("sizes")}
-                                onChange={e =>
-                                    setProduct({ ...product, sizes: e.target.value })
-                                }
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-white/60 text-xs font-medium mb-2">
-                                Colors
-                            </label>
-                            <input
-                                value={product.colors}
-                                placeholder="Black, White"
-                                className={fieldClass("colors")}
-                                onChange={e =>
-                                    setProduct({ ...product, colors: e.target.value })
-                                }
-                            />
                         </div>
 
                     </div>
